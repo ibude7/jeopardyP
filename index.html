@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jeopardy Break Time Game</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="game-container">
+        <!-- Header with score and reset -->
+        <header class="game-header">
+            <div class="score-display">
+                <h1>Break Time Earned: <span id="currentScore">0</span> minutes</h1>
+            </div>
+            <button id="resetBtn" class="btn btn--secondary">Reset Game</button>
+        </header>
+
+        <!-- Main game board -->
+        <div id="gameBoard" class="game-board">
+            <div class="categories-row">
+                <div class="category-header">Paramount+ Shows</div>
+                <div class="category-header">Star Trek Universe</div>
+                <div class="category-header">Yellowstone Universe</div>
+                <div class="category-header">Reality TV</div>
+                <div class="category-header">Crime & Drama</div>
+                <div class="category-header">Movies</div>
+            </div>
+            
+            <div class="questions-grid">
+                <!-- Row 1 - 1 minute questions -->
+                <div class="question-tile" data-category="Paramount+ Shows" data-value="1">
+                    <span class="break-time">1 Minute</span>
+                </div>
+                <div class="question-tile" data-category="Star Trek Universe" data-value="1">
+                    <span class="break-time">1 Minute</span>
+                </div>
+                <div class="question-tile" data-category="Yellowstone Universe" data-value="1">
+                    <span class="break-time">1 Minute</span>
+                </div>
+                <div class="question-tile" data-category="Reality TV" data-value="1">
+                    <span class="break-time">1 Minute</span>
+                </div>
+                <div class="question-tile" data-category="Crime & Drama" data-value="1">
+                    <span class="break-time">1 Minute</span>
+                </div>
+                <div class="question-tile" data-category="Movies" data-value="1">
+                    <span class="break-time">1 Minute</span>
+                </div>
+
+                <!-- Row 2 - 2 minute questions -->
+                <div class="question-tile" data-category="Paramount+ Shows" data-value="2">
+                    <span class="break-time">2 Minutes</span>
+                </div>
+                <div class="question-tile" data-category="Star Trek Universe" data-value="2">
+                    <span class="break-time">2 Minutes</span>
+                </div>
+                <div class="question-tile" data-category="Yellowstone Universe" data-value="2">
+                    <span class="break-time">2 Minutes</span>
+                </div>
+                <div class="question-tile" data-category="Reality TV" data-value="2">
+                    <span class="break-time">2 Minutes</span>
+                </div>
+                <div class="question-tile" data-category="Crime & Drama" data-value="2">
+                    <span class="break-time">2 Minutes</span>
+                </div>
+                <div class="question-tile" data-category="Movies" data-value="2">
+                    <span class="break-time">2 Minutes</span>
+                </div>
+
+                <!-- Row 3 - 3 minute questions -->
+                <div class="question-tile" data-category="Paramount+ Shows" data-value="3">
+                    <span class="break-time">3 Minutes</span>
+                </div>
+                <div class="question-tile" data-category="Star Trek Universe" data-value="3">
+                    <span class="break-time">3 Minutes</span>
+                </div>
+                <div class="question-tile" data-category="Yellowstone Universe" data-value="3">
+                    <span class="break-time">3 Minutes</span>
+                </div>
+                <div class="question-tile" data-category="Reality TV" data-value="3">
+                    <span class="break-time">3 Minutes</span>
+                </div>
+                <div class="question-tile" data-category="Crime & Drama" data-value="3">
+                    <span class="break-time">3 Minutes</span>
+                </div>
+                <div class="question-tile" data-category="Movies" data-value="3">
+                    <span class="break-time">3 Minutes</span>
+                </div>
+
+                <!-- Row 4 - 4 minute questions -->
+                <div class="question-tile" data-category="Paramount+ Shows" data-value="4">
+                    <span class="break-time">4 Minutes</span>
+                </div>
+                <div class="question-tile" data-category="Star Trek Universe" data-value="4">
+                    <span class="break-time">4 Minutes</span>
+                </div>
+                <div class="question-tile" data-category="Yellowstone Universe" data-value="4">
+                    <span class="break-time">4 Minutes</span>
+                </div>
+                <div class="question-tile" data-category="Reality TV" data-value="4">
+                    <span class="break-time">4 Minutes</span>
+                </div>
+                <div class="question-tile" data-category="Crime & Drama" data-value="4">
+                    <span class="break-time">4 Minutes</span>
+                </div>
+                <div class="question-tile" data-category="Movies" data-value="4">
+                    <span class="break-time">4 Minutes</span>
+                </div>
+
+                <!-- Row 5 - 5 minute questions -->
+                <div class="question-tile" data-category="Paramount+ Shows" data-value="5">
+                    <span class="break-time">5 Minutes</span>
+                </div>
+                <div class="question-tile" data-category="Star Trek Universe" data-value="5">
+                    <span class="break-time">5 Minutes</span>
+                </div>
+                <div class="question-tile" data-category="Yellowstone Universe" data-value="5">
+                    <span class="break-time">5 Minutes</span>
+                </div>
+                <div class="question-tile" data-category="Reality TV" data-value="5">
+                    <span class="break-time">5 Minutes</span>
+                </div>
+                <div class="question-tile" data-category="Crime & Drama" data-value="5">
+                    <span class="break-time">5 Minutes</span>
+                </div>
+                <div class="question-tile" data-category="Movies" data-value="5">
+                    <span class="break-time">5 Minutes</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Question Modal -->
+        <div id="questionModal" class="modal hidden">
+            <div class="modal-content">
+                <div class="question-header">
+                    <div class="timer-display">
+                        Time: <span id="timer">30</span>s
+                    </div>
+                    <div class="question-value">
+                        <span id="questionValue"></span>
+                    </div>
+                </div>
+                
+                <div class="question-text">
+                    <p id="questionText"></p>
+                </div>
+
+                <div class="answer-section">
+                    <input type="text" id="answerInput" class="form-control" placeholder="Type your answer here..." autocomplete="off">
+                    <button id="submitBtn" class="btn btn--primary">Submit Answer</button>
+                </div>
+
+                <div id="feedback" class="feedback hidden">
+                    <div id="feedbackMessage"></div>
+                    <button id="continueBtn" class="btn btn--secondary">Continue</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Game Over Modal -->
+        <div id="gameOverModal" class="modal hidden">
+            <div class="modal-content">
+                <h2>Game Over!</h2>
+                <p>You've completed all questions!</p>
+                <p>Total break time earned: <span id="finalScore"></span> minutes</p>
+                <button id="newGameBtn" class="btn btn--primary">Start New Game</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>

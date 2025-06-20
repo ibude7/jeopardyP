@@ -1,0 +1,416 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Google Slides Jeopardy Break Time Implementation</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        h1 {
+            color: #0066CC;
+            text-align: center;
+        }
+        h2 {
+            color: #000080;
+            margin-top: 30px;
+        }
+        pre {
+            background-color: #f5f5f5;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+        }
+        .note {
+            background-color: #fff3cd;
+            padding: 10px;
+            border-left: 4px solid #ffc107;
+            margin: 20px 0;
+        }
+        .implementation {
+            background-color: #e6f7ff;
+            padding: 10px;
+            border-left: 4px solid #0066CC;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>Implementing Jeopardy with Break Time Prizes in Google Slides</h1>
+
+    <div class="note">
+        <strong>Note:</strong> This document outlines how to implement a Jeopardy game in Google Slides where:
+        <ul>
+            <li>Prizes are "break time" ranging from 1-5 minutes</li>
+            <li>Players can type their answers (case-insensitive)</li>
+            <li>The game automatically awards or deducts time based on correct/incorrect answers</li>
+        </ul>
+    </div>
+
+    <h2>Implementation Overview</h2>
+    <p>Google Slides doesn't natively support interactive elements like text input fields or automatic scoring. 
+    However, we can use Google Apps Script to extend Google Slides with additional functionality.</p>
+
+    <p>The implementation will involve:</p>
+    <ol>
+        <li>Creating a standard Jeopardy game board in Google Slides</li>
+        <li>Adding a custom sidebar that contains text input and scoring functionality</li>
+        <li>Using Google Apps Script to handle answer validation and break time calculations</li>
+    </ol>
+
+    <h2>Step 1: Create the Base Jeopardy Game in Google Slides</h2>
+    <p>First, create a standard Jeopardy game board following the basic instructions from previous tutorials:</p>
+    <ul>
+        <li>Create a title slide</li>
+        <li>Create a game board slide with categories and point values (using "1 Min" to "5 Min" instead of dollar amounts)</li>
+        <li>Create individual question slides</li>
+        <li>Create answer slides</li>
+        <li>Set up hyperlinks between slides for navigation</li>
+    </ul>
+
+    <h2>Step 2: Add Google Apps Script for the Custom Sidebar</h2>
+    <p>In Google Slides, go to Extensions > Apps Script to open the script editor. Then add the following code:</p>
+
+    <pre>
+// Google Apps Script code for Jeopardy Break Time
+function onOpen() {
+  SlidesApp.getUi()
+      .createMenu('Jeopardy Game')
+      .addItem('Show Game Controls', 'showSidebar')
+      .addToUi();
+}
+
+function showSidebar() {
+  const html = HtmlService.createHtmlOutputFromFile('Sidebar')
+      .setTitle('Jeopardy Game Controls')
+      .setWidth(300);
+  SlidesApp.getUi().showSidebar(html);
+}
+
+// Store game data
+let gameData = {
+  breakTime: 0,
+  questions: {},
+  answers: {}
+};
+
+// Initialize the game data with questions and answers
+function initializeGame() {
+  // This would be populated with all your game questions and answers
+  // Here's a simplified example:
+  gameData.questions = {
+    "Category1": {
+      "1": "This animated series follows SpongeBob's early days at summer camp.",
+      "2": "In this reboot of a 1990s series, babies Tommy, Chuckie, Phil, and Lil return with new adventures.",
+      // More questions...
+    },
+    // More categories...
+  };
+
+  gameData.answers = {
+    "Category1": {
+      "1": "Kamp Koral",
+      "2": "Rugrats",
+      // More answers...
+    },
+    // More categories...
+  };
+}
+
+// Function to check an answer
+function checkAnswer(category, value, userAnswer) {
+  const correctAnswer = gameData.answers[category][value];
+
+  // Case-insensitive comparison
+  if (userAnswer.toLowerCase() === correctAnswer.toLowerCase()) {
+    // Correct answer - award break time
+    gameData.breakTime += parseInt(value);
+    return {
+      isCorrect: true,
+      message: 'Correct! You earned a ' + value + ' minute break!',
+      breakTime: gameData.breakTime
+    };
+  } else {
+    // Wrong answer - deduct break time, but don't go below 0
+    gameData.breakTime = Math.max(0, gameData.breakTime - parseInt(value));
+    return {
+      isCorrect: false,
+      message: 'Wrong! The correct answer was: ' + correctAnswer,
+      breakTime: gameData.breakTime
+    };
+  }
+}
+
+// Function to get the current break time
+function getBreakTime() {
+  return gameData.breakTime;
+}
+
+// Reset the game
+function resetGame() {
+  gameData.breakTime = 0;
+  return {
+    breakTime: gameData.breakTime,
+    message: 'Game has been reset!'
+  };
+}
+</pre>
+
+    <h2>Step 3: Create the Sidebar HTML</h2>
+    <p>In the Apps Script editor, click on the + next to Files and create a new HTML file named "Sidebar". Add the following code:</p>
+
+    <pre>
+<!DOCTYPE html>
+<html>
+  <head>
+    <base target="_top">
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        padding: 10px;
+      }
+      .container {
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+      }
+      .score-display {
+        font-size: 18px;
+        font-weight: bold;
+        text-align: center;
+        padding: 10px;
+        background-color: #0066CC;
+        color: white;
+        border-radius: 5px;
+      }
+      input[type="text"] {
+        width: 100%;
+        padding: 8px;
+        box-sizing: border-box;
+      }
+      select {
+        width: 100%;
+        padding: 8px;
+      }
+      button {
+        padding: 10px;
+        background-color: #FFD700;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        font-weight: bold;
+      }
+      button:hover {
+        background-color: #FFC500;
+      }
+      .result {
+        padding: 10px;
+        border-radius: 5px;
+        text-align: center;
+        font-weight: bold;
+      }
+      .correct {
+        background-color: #d4edda;
+        color: #155724;
+      }
+      .wrong {
+        background-color: #f8d7da;
+        color: #721c24;
+      }
+      .timer {
+        text-align: center;
+        font-size: 16px;
+        margin-bottom: 10px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="score-display">
+        Break Time: <span id="breakTime">0</span> minutes
+      </div>
+
+      <div>
+        <label for="categorySelect">Category:</label>
+        <select id="categorySelect">
+          <option value="Category1">Paramount+ Shows</option>
+          <option value="Category2">Star Trek Universe</option>
+          <option value="Category3">Yellowstone Universe</option>
+          <option value="Category4">Reality TV</option>
+          <option value="Category5">Crime & Drama</option>
+          <option value="Category6">Movies</option>
+        </select>
+      </div>
+
+      <div>
+        <label for="valueSelect">Value:</label>
+        <select id="valueSelect">
+          <option value="1">1 Minute</option>
+          <option value="2">2 Minutes</option>
+          <option value="3">3 Minutes</option>
+          <option value="4">4 Minutes</option>
+          <option value="5">5 Minutes</option>
+        </select>
+      </div>
+
+      <div class="timer" id="timer">
+        Time: 30 seconds
+      </div>
+
+      <div>
+        <label for="answerInput">Your Answer:</label>
+        <input type="text" id="answerInput" placeholder="Type your answer...">
+      </div>
+
+      <button id="submitAnswer">Submit Answer</button>
+
+      <button id="startTimer">Start 30s Timer</button>
+
+      <div id="result" class="result"></div>
+
+      <button id="resetGame">Reset Game</button>
+    </div>
+
+    <script>
+      // Variables
+      let timerInterval;
+      let timeLeft = 30;
+
+      // Initialize
+      function loadBreakTime() {
+        google.script.run
+          .withSuccessHandler(updateBreakTime)
+          .getBreakTime();
+      }
+
+      function updateBreakTime(time) {
+        document.getElementById('breakTime').textContent = time;
+      }
+
+      // Submit answer
+      document.getElementById('submitAnswer').addEventListener('click', function() {
+        const category = document.getElementById('categorySelect').value;
+        const value = document.getElementById('valueSelect').value;
+        const answer = document.getElementById('answerInput').value.trim();
+
+        if (answer === '') {
+          alert('Please enter an answer');
+          return;
+        }
+
+        // Stop timer if it's running
+        if (timerInterval) {
+          clearInterval(timerInterval);
+          document.getElementById('timer').textContent = 'Time: 30 seconds';
+        }
+
+        google.script.run
+          .withSuccessHandler(handleAnswerResult)
+          .checkAnswer(category, value, answer);
+      });
+
+      // Handle answer result
+      function handleAnswerResult(result) {
+        const resultDiv = document.getElementById('result');
+        resultDiv.textContent = result.message;
+
+        if (result.isCorrect) {
+          resultDiv.className = 'result correct';
+        } else {
+          resultDiv.className = 'result wrong';
+        }
+
+        // Update break time
+        document.getElementById('breakTime').textContent = result.breakTime;
+
+        // Clear answer input
+        document.getElementById('answerInput').value = '';
+      }
+
+      // Start timer
+      document.getElementById('startTimer').addEventListener('click', function() {
+        // Clear any existing timer
+        if (timerInterval) {
+          clearInterval(timerInterval);
+        }
+
+        // Reset time
+        timeLeft = 30;
+        document.getElementById('timer').textContent = 'Time: ' + timeLeft + ' seconds';
+
+        // Start new timer
+        timerInterval = setInterval(function() {
+          timeLeft--;
+          document.getElementById('timer').textContent = 'Time: ' + timeLeft + ' seconds';
+
+          if (timeLeft <= 0) {
+            clearInterval(timerInterval);
+            document.getElementById('timer').textContent = 'Time's up!';
+          }
+        }, 1000);
+      });
+
+      // Reset game
+      document.getElementById('resetGame').addEventListener('click', function() {
+        google.script.run
+          .withSuccessHandler(function(result) {
+            document.getElementById('breakTime').textContent = result.breakTime;
+            document.getElementById('result').textContent = result.message;
+            document.getElementById('result').className = 'result';
+          })
+          .resetGame();
+      });
+
+      // Load initial break time
+      loadBreakTime();
+    </script>
+  </body>
+</html>
+</pre>
+
+    <h2>Implementation Process</h2>
+    <div class="implementation">
+        <p><strong>How to use the Jeopardy Break Time game:</strong></p>
+        <ol>
+            <li>Present your Google Slides Jeopardy game board as usual</li>
+            <li>Click on "Jeopardy Game" in the menu and select "Show Game Controls" to open the sidebar</li>
+            <li>When a player selects a question:
+                <ul>
+                    <li>Select the corresponding category and value in the sidebar</li>
+                    <li>Click "Start 30s Timer" to begin the timer</li>
+                    <li>Player types their answer in the input field</li>
+                    <li>Click "Submit Answer" to check the answer</li>
+                    <li>Break time will be automatically awarded or deducted</li>
+                </ul>
+            </li>
+            <li>Continue playing until all questions are answered</li>
+            <li>The final break time will be displayed in the sidebar</li>
+        </ol>
+    </div>
+
+    <h2>Limitations</h2>
+    <p>This implementation has some limitations:</p>
+    <ul>
+        <li>The sidebar must be manually controlled by the game host</li>
+        <li>Questions and answers must be pre-populated in the Apps Script code</li>
+        <li>Players still need to navigate through slides manually</li>
+        <li>The timer is manual and doesn't automatically end the question</li>
+    </ul>
+
+    <h2>Alternative Approach: Web Application</h2>
+    <p>For a fully automated experience with text input fields and automatic scoring, consider building a web application using HTML, CSS, and JavaScript instead of Google Slides. This would provide more flexibility and better interactivity.</p>
+
+    <p>You can use platforms like:</p>
+    <ul>
+        <li><a href="https://buzzinga.io">Buzzinga.io</a> - Offers buzzer functionality and custom game creation</li>
+        <li><a href="https://www.playfactile.com">Factile</a> - Has comprehensive Jeopardy game features</li>
+        <li><a href="https://jeopardylabs.com">JeopardyLabs</a> - Simple Jeopardy game creation</li>
+    </ul>
+</body>
+</html>

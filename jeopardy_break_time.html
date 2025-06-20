@@ -1,0 +1,429 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jeopardy with Break Time Prizes</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #0066CC;
+            color: white;
+            margin: 0;
+            padding: 20px;
+        }
+        .game-container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .game-board {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .category {
+            background-color: #000080;
+            padding: 10px;
+            text-align: center;
+            font-weight: bold;
+        }
+        .cell {
+            background-color: #FFD700;
+            color: #000;
+            text-align: center;
+            padding: 20px 0;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .cell:hover {
+            background-color: #FFC500;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            z-index: 100;
+        }
+        .modal-content {
+            background-color: #0066CC;
+            margin: 10% auto;
+            padding: 20px;
+            width: 60%;
+            border-radius: 5px;
+            position: relative;
+        }
+        .close {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            font-size: 24px;
+            cursor: pointer;
+        }
+        .question {
+            font-size: 24px;
+            margin-bottom: 20px;
+        }
+        .answer-form {
+            margin-top: 20px;
+        }
+        input[type="text"] {
+            width: 100%;
+            padding: 10px;
+            font-size: 16px;
+            margin-bottom: 10px;
+        }
+        button {
+            padding: 10px 20px;
+            background-color: #FFD700;
+            color: #000;
+            border: none;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #FFC500;
+        }
+        .result {
+            margin-top: 20px;
+            font-size: 20px;
+            font-weight: bold;
+        }
+        .score-display {
+            text-align: right;
+            font-size: 20px;
+            margin-bottom: 20px;
+        }
+        .timer {
+            font-size: 16px;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <div class="header">
+            <h1>JEOPARDY: BREAK TIME EDITION</h1>
+            <p>Answer correctly to earn break minutes. Wrong answers deduct time!</p>
+            <div class="score-display">Break Time: <span id="score">0</span> minutes</div>
+        </div>
+
+        <div class="game-board" id="gameBoard">
+            <!-- Categories -->
+            <div class="category">Paramount+ Shows</div>
+            <div class="category">Star Trek Universe</div>
+            <div class="category">Yellowstone Universe</div>
+            <div class="category">Reality TV</div>
+            <div class="category">Crime & Drama</div>
+            <div class="category">Movies</div>
+
+            <!-- Points will be generated via JavaScript -->
+        </div>
+
+        <div id="questionModal" class="modal">
+            <div class="modal-content">
+                <span class="close" id="closeModal">&times;</span>
+                <div class="question" id="questionText"></div>
+                <div class="timer" id="questionTimer"></div>
+                <div class="answer-form">
+                    <input type="text" id="answerInput" placeholder="Type your answer here...">
+                    <button id="submitAnswer">Submit Answer</button>
+                </div>
+                <div class="result" id="resultText"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Game data
+        const categories = [
+            "Paramount+ Shows", 
+            "Star Trek Universe", 
+            "Yellowstone Universe", 
+            "Reality TV", 
+            "Crime & Drama", 
+            "Movies"
+        ];
+
+        const questions = {
+            "Paramount+ Shows": {
+                1: "This animated series follows SpongeBob's early days at summer camp.",
+                2: "In this reboot of a 1990s series, babies Tommy, Chuckie, Phil, and Lil return with new adventures.",
+                3: "Mayor of Kingstown takes place in a city dominated by these institutions.",
+                4: "The Good Fight is a spinoff of this popular CBS legal drama.",
+                5: "This comedy series starring Kelsey Grammer as a psychiatrist was rebooted for Paramount+ in 2025."
+            },
+            "Star Trek Universe": {
+                1: "This Star Trek series features the return of Jean-Luc Picard.",
+                2: "In Star Trek: Discovery, this character became the first Black female lead in the franchise history.",
+                3: "This animated Star Trek comedy series follows the support crew of one of Starfleet's least important ships.",
+                4: "Star Trek: Strange New Worlds is a spinoff featuring this iconic character as captain of the USS Enterprise.",
+                5: "The 2025 film Star Trek: Section 31 stars this actress who previously played Emperor Philippa Georgiou."
+            },
+            "Yellowstone Universe": {
+                1: "This actor plays John Dutton in the series Yellowstone.",
+                2: "1883 depicts the Dutton family's journey to this U.S. state where they established their ranch.",
+                3: "This actor known for The Godfather starred in the Yellowstone prequel 1923.",
+                4: "Taylor Sheridan, creator of Yellowstone, also created this series starring Jeremy Renner as a released prisoner.",
+                5: "This Yellowstone prequel series takes place during Prohibition and the Great Depression."
+            },
+            "Reality TV": {
+                1: "RuPaul hosts this popular drag competition show available on Paramount+.",
+                2: "Season 17 winner of RuPaul's Drag Race in 2025 was this queen from Cleveland, Ohio.",
+                3: "This MTV reality show follows participants competing in physical challenges and strategic gameplay.",
+                4: "RuPaul's Drag Race All Stars Season 10 introduced this new format with competing brackets.",
+                5: "The new elimination mechanism on RuPaul's Drag Race featuring judge Michelle Visage involves this controversial water feature."
+            },
+            "Crime & Drama": {
+                1: "Criminal Minds: Evolution is a continuation of this long-running CBS procedural drama.",
+                2: "In Evil, this actress plays forensic psychologist Kristen Bouchard.",
+                3: "This antagonist known as the 'Sicarius Killer' appears in Criminal Minds: Evolution.",
+                4: "The Good Fight takes place in this major U.S. city.",
+                5: "Tulsa King stars this actor as a New York mafia capo who rebuilds his criminal empire in Oklahoma."
+            },
+            "Movies": {
+                1: "This blue video game character's movies are available on Paramount+.",
+                2: "This 2025 animated film explores the origin story of Optimus Prime and Megatron.",
+                3: "Tom Cruise returns as Ethan Hunt in this action franchise available on Paramount+.",
+                4: "This 2020 sci-fi film starring Mark Wahlberg as a man who can remember his past lives was a Paramount+ exclusive.",
+                5: "A Quiet Place is set in a post-apocalyptic world where people must remain silent to avoid these creatures."
+            }
+        };
+
+        const answers = {
+            "Paramount+ Shows": {
+                1: "Kamp Koral",
+                2: "Rugrats",
+                3: "Prisons",
+                4: "The Good Wife",
+                5: "Frasier"
+            },
+            "Star Trek Universe": {
+                1: "Star Trek: Picard",
+                2: "Michael Burnham",
+                3: "Star Trek: Lower Decks",
+                4: "Captain Pike",
+                5: "Michelle Yeoh"
+            },
+            "Yellowstone Universe": {
+                1: "Kevin Costner",
+                2: "Montana",
+                3: "Harrison Ford",
+                4: "Mayor of Kingstown",
+                5: "1923"
+            },
+            "Reality TV": {
+                1: "RuPaul's Drag Race",
+                2: "Onya Nurve",
+                3: "The Challenge",
+                4: "Tournament",
+                5: "Dunk Tank"
+            },
+            "Crime & Drama": {
+                1: "Criminal Minds",
+                2: "Katja Herbers",
+                3: "Elias Voit",
+                4: "Chicago",
+                5: "Sylvester Stallone"
+            },
+            "Movies": {
+                1: "Sonic the Hedgehog",
+                2: "Transformers One",
+                3: "Mission: Impossible",
+                4: "Infinite",
+                5: "Aliens"
+            }
+        };
+
+        let currentScore = 0;
+        let currentCategory = "";
+        let currentQuestionValue = 0;
+        let currentQuestion = "";
+        let currentAnswer = "";
+        let answeredQuestions = [];
+        let timerInterval = null;
+        let timeLeft = 0;
+
+        // Initialize game board
+        function initializeBoard() {
+            const gameBoard = document.getElementById('gameBoard');
+
+            // Add points cells for each category
+            for (let i = 1; i <= 5; i++) {
+                categories.forEach(category => {
+                    const breakTime = i; // Break time in minutes (1-5)
+                    const cell = document.createElement('div');
+                    cell.className = 'cell';
+                    cell.textContent = breakTime + ' Min';
+                    cell.dataset.category = category;
+                    cell.dataset.value = i;
+                    cell.addEventListener('click', handleCellClick);
+                    gameBoard.appendChild(cell);
+                });
+            }
+        }
+
+        // Handle clicking on a cell
+        function handleCellClick(event) {
+            const cell = event.target;
+            const category = cell.dataset.category;
+            const value = parseInt(cell.dataset.value);
+
+            // Check if this question was already answered
+            const questionId = `${category}-${value}`;
+            if (answeredQuestions.includes(questionId)) {
+                return; // Question already answered
+            }
+
+            // Set current question data
+            currentCategory = category;
+            currentQuestionValue = value;
+            currentQuestion = questions[category][value];
+            currentAnswer = answers[category][value];
+
+            // Show the question modal
+            showQuestionModal();
+
+            // Mark this question as answered
+            answeredQuestions.push(questionId);
+            cell.style.backgroundColor = '#0066CC';
+            cell.style.color = '#0066CC';
+            cell.removeEventListener('click', handleCellClick);
+        }
+
+        // Show question modal
+        function showQuestionModal() {
+            const modal = document.getElementById('questionModal');
+            const questionText = document.getElementById('questionText');
+            const resultText = document.getElementById('resultText');
+            const answerInput = document.getElementById('answerInput');
+            const timerElement = document.getElementById('questionTimer');
+
+            // Reset modal content
+            questionText.textContent = currentQuestion;
+            resultText.textContent = '';
+            answerInput.value = '';
+
+            // Show modal
+            modal.style.display = 'block';
+
+            // Focus on input field
+            setTimeout(() => {
+                answerInput.focus();
+            }, 100);
+
+            // Set up timer (30 seconds)
+            timeLeft = 30;
+            timerElement.textContent = `Time remaining: ${timeLeft} seconds`;
+
+            // Clear any existing timer
+            if (timerInterval) {
+                clearInterval(timerInterval);
+            }
+
+            // Start new timer
+            timerInterval = setInterval(() => {
+                timeLeft--;
+                timerElement.textContent = `Time remaining: ${timeLeft} seconds`;
+
+                if (timeLeft <= 0) {
+                    clearInterval(timerInterval);
+                    handleTimeUp();
+                }
+            }, 1000);
+        }
+
+        // Close the modal
+        function closeModal() {
+            const modal = document.getElementById('questionModal');
+            modal.style.display = 'none';
+
+            // Clear timer
+            if (timerInterval) {
+                clearInterval(timerInterval);
+            }
+        }
+
+        // Handle time up
+        function handleTimeUp() {
+            const resultText = document.getElementById('resultText');
+            resultText.textContent = `Time's up! The correct answer was: ${currentAnswer}`;
+            resultText.style.color = 'red';
+
+            // Update score (deduct time)
+            updateScore(-currentQuestionValue);
+
+            // Add button to continue
+            setTimeout(() => {
+                closeModal();
+            }, 3000);
+        }
+
+        // Handle answer submission
+        function handleAnswerSubmit() {
+            const answerInput = document.getElementById('answerInput');
+            const resultText = document.getElementById('resultText');
+            const playerAnswer = answerInput.value.trim();
+
+            // Clear timer
+            if (timerInterval) {
+                clearInterval(timerInterval);
+            }
+
+            // Check answer (case insensitive)
+            const isCorrect = playerAnswer.toLowerCase() === currentAnswer.toLowerCase();
+
+            if (isCorrect) {
+                resultText.textContent = 'Correct! You earned a ' + currentQuestionValue + ' minute break!';
+                resultText.style.color = 'lightgreen';
+                updateScore(currentQuestionValue);
+            } else {
+                resultText.textContent = 'Wrong! The correct answer was: ' + currentAnswer;
+                resultText.style.color = 'red';
+                updateScore(-currentQuestionValue);
+            }
+
+            // Close modal after a delay
+            setTimeout(() => {
+                closeModal();
+            }, 3000);
+        }
+
+        // Update score
+        function updateScore(points) {
+            currentScore += points;
+
+            // Ensure score doesn't go below zero
+            if (currentScore < 0) currentScore = 0;
+
+            // Update score display
+            document.getElementById('score').textContent = currentScore;
+        }
+
+        // Initialize game
+        document.addEventListener('DOMContentLoaded', () => {
+            initializeBoard();
+
+            // Set up event listeners
+            document.getElementById('closeModal').addEventListener('click', closeModal);
+            document.getElementById('submitAnswer').addEventListener('click', handleAnswerSubmit);
+
+            // Allow Enter key to submit answer
+            document.getElementById('answerInput').addEventListener('keypress', (event) => {
+                if (event.key === 'Enter') {
+                    handleAnswerSubmit();
+                }
+            });
+        });
+    </script>
+</body>
+</html>
